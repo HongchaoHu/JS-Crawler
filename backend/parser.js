@@ -13,7 +13,7 @@ app.use(function (req, res, next) {
 var books = [];
 
 async function scrapeAmazon(url, res) {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: "new" });
     const page = await browser.newPage();
     await page.goto(url);
     // Get hrefs
@@ -27,25 +27,27 @@ async function scrapeAmazon(url, res) {
 }
 
 async function getBookInfo(url, length, res) {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: "new" });
     const page = await browser.newPage();
     await page.goto(url);
     // Get image url
     const [image] = await page.$x('//*[@id="coverImage"]');
-    const src = await image.getProperty('src');
-    const txt = await src.jsonValue();
-    const title = await page.$('#bookTitle');
-    const text = await (await title.getProperty('textContent')).jsonValue();
-    var newObj = {
-        'title': text.trim(),
-        'web_url': url,
-        'image_url': {txt}.txt
-    };
-    books.push(newObj);
-    if (books.length == length) {
-        console.log(books);
-        res.json(books);
-        books = []
+    if (image) {
+        const src = await image.getProperty('src');
+        const txt = await src.jsonValue();
+        const title = await page.$('#bookTitle');
+        const text = await (await title.getProperty('textContent')).jsonValue();
+        var newObj = {
+            'title': text.trim(),
+            'web_url': url,
+            'image_url': {txt}.txt
+        };
+        books.push(newObj);
+        if (books.length == length) {
+            console.log(books);
+            res.json(books);
+            books = []
+        }
     }
     browser.close();
 }
